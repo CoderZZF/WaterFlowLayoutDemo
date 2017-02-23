@@ -23,6 +23,7 @@ class ViewController: UIViewController {
         layout.dataSource = self
         let collectionView = UICollectionView(frame: self.view.bounds, collectionViewLayout: layout)
         collectionView.dataSource = self
+        collectionView.delegate = self
         collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: kTestCellID)
         
         return collectionView
@@ -36,7 +37,7 @@ class ViewController: UIViewController {
 }
 
 
-extension ViewController : UICollectionViewDataSource {
+extension ViewController : UICollectionViewDataSource, UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return itemCount
     }
@@ -45,12 +46,14 @@ extension ViewController : UICollectionViewDataSource {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: kTestCellID, for: indexPath)
         cell.backgroundColor = UIColor.randomColor()
         
-        if indexPath.item == itemCount - 1 {
+        return cell
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if scrollView.contentOffset.y > scrollView.contentSize.height - scrollView.bounds.height {
             itemCount += 30
             collectionView.reloadData()
         }
-        
-        return cell
     }
 }
 
