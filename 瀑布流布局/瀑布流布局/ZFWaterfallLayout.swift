@@ -8,10 +8,16 @@
 
 import UIKit
 
+protocol ZFWaterfallLayoutDataSource : class {
+    func waterfallLayout(_ layout : ZFWaterfallLayout, itemIndex : Int) -> CGFloat
+}
+
 class ZFWaterfallLayout: UICollectionViewFlowLayout {
-    
+    var cols = 2
+    weak var dataSource : ZFWaterfallLayoutDataSource?
     fileprivate lazy var attributes : [UICollectionViewLayoutAttributes] = [UICollectionViewLayoutAttributes]()
     fileprivate lazy var maxHeight : CGFloat = self.sectionInset.top + self.sectionInset.bottom
+    fileprivate lazy var heights : [CGFloat] = Array(repeating: self.sectionInset.top, count: self.cols)
 }
 
 /*
@@ -36,22 +42,24 @@ extension ZFWaterfallLayout {
         let count = collectionView.numberOfItems(inSection: 0)
         
         // 3. 遍历所有的cell,给每一个cell准备一个UICollectionViewLayoutAttributes
-        let cols = 2
         let itemW = (collectionView.bounds.width - sectionInset.left - sectionInset.right - (CGFloat(cols) - 1) * minimumInteritemSpacing) / CGFloat(cols)
         
-        var heights : [CGFloat] = Array(repeating: sectionInset.top, count: cols) // 保存高度的数组
-        
-        for i in 0..<count {
+        for i in attributes.count..<count {
             // 3.1 创建UICollectionViewLayoutAttributes,并且传入indexPath
             let indexPath = IndexPath(item: i, section: 0)
             let attribute = UICollectionViewLayoutAttributes(forCellWith: indexPath)
             
             // 3.2 给attributes设置frame
-            let itemH = CGFloat(arc4random_uniform(100) + 100)
+            /*
+            guard let itemH = dataSource?.ZFWaterfallLayout(self, itemIndex: i) else {
+                fatalError("请设置数据源,再用我的瀑布流布局")
+            }
+            */
+            let itemH = dataSource?.waterfallLayout(self, itemIndex: i) ?? 100
             let minH = heights.min()! // 获取数组中最小的值
             let minIndex = heights.index(of: minH)! // 获取最小值对应的组数
             let itemX = sectionInset.left + (minimumInteritemSpacing + itemW) * CGFloat(minIndex)
-            let itemY = minH + minimumLineSpacing
+            let itemY = minH
             
             attribute.frame = CGRect(x: itemX, y: itemY, width: itemW, height: itemH)
             
@@ -59,11 +67,11 @@ extension ZFWaterfallLayout {
             attributes.append(attribute)
             
             // 3.4 改变minIndex位置的高度
-            heights[minIndex] = attribute.frame.maxY
+            heights[minIndex] = attribute.frame.maxY + minimumLineSpacing
         }
         
         // 4. 获取最大的高度
-        maxHeight = heights.max()!
+        maxHeight = heights.max()! - minimumLineSpacing
     }
 }
 
